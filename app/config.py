@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     ip_info_timeout: float = 2.0
     ip_info_cache_ttl: int = 3600
 
+    # --- Usage analytics (privacy-preserving; see app/core/analytics.py) ---
+    analytics_enabled: bool = False
+    analytics_secret: str | None = None
+    analytics_country_header: str | None = None
+
     # --- CORS ---
     cors_origins: str = ""
 

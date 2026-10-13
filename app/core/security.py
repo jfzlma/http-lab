@@ -24,6 +24,7 @@ from starlette.types import ASGIApp
 
 from ..config import Settings
 from ..logging_conf import redact_headers, redact_query_string
+from .analytics import Analytics
 from .errors import error_body
 from .rate_limiter import retry_after_seconds
 
@@ -49,6 +50,10 @@ def resolve_client_ip(request: Request, trusted_proxy_count: int) -> str:
 
     With ``trusted_proxy_count == 0`` (direct exposure) the socket peer address
     is authoritative and forwarding headers are treated as client-supplied data.
+
+    Each trusted proxy *appends* the address it received the connection from, so
+    behind N proxies the client is the N-th entry from the right. Anything further
+    left was supplied by the client itself and is never trusted.
     """
     peer = request.client.host if request.client else "unknown"
     if trusted_proxy_count <= 0:
@@ -57,9 +62,11 @@ def resolve_client_ip(request: Request, trusted_proxy_count: int) -> str:
     if not xff:
         return peer
     parts = [p.strip() for p in xff.split(",") if p.strip()]
-    if len(parts) > trusted_proxy_count:
-        return parts[-trusted_proxy_count - 1]
-    return peer
+    if not parts:
+        return peer
+    # Fewer entries than proxies means a misconfigured count; the leftmost entry
+    # is then the furthest hop we can see.
+    return parts[-trusted_proxy_count] if len(parts) >= trusted_proxy_count else parts[0]
 
 
 def _error_response(request: Request, status: int, detail: dict[str, object]) -> Response:
@@ -72,6 +79,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp, settings: Settings) -> None:
         super().__init__(app)
         self.settings = settings
+        self.analytics = Analytics(settings)
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         start = time.perf_counter()
@@ -141,6 +149,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         return response
 
     def _log(self, request: Request, status: int, start: float) -> None:
+        self.analytics.record(request, status, (time.perf_counter() - start) * 1000)
         if not self.settings.log_requests:
             return
         query = redact_query_string(request.url.query)

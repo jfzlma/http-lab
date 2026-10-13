@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -80,10 +81,27 @@ def test_proxy_trusted_forwarding_and_forwarded_header(
         "/proxy",
         headers={"x-forwarded-for": "9.9.9.9, 8.8.8.8", "forwarded": 'for="1.1.1.1";proto=https'},
     ).json()
-    assert data["client_ip"] == "9.9.9.9"
+    # 9.9.9.9 was sent by the client (spoofable); 8.8.8.8 was appended by the proxy.
+    assert data["client_ip"] == "8.8.8.8"
     assert data["client_ip_source"] == "x-forwarded-for"
     assert data["forwarded_hosts"] == ["1.1.1.1"]
     assert "1 trusted" in data["trust_model"]
+
+
+@pytest.mark.parametrize(
+    ("xff", "count", "expected"),
+    [
+        ("203.0.113.7", 1, "203.0.113.7"),  # single proxy, no client-supplied header
+        ("6.6.6.6, 203.0.113.7", 1, "203.0.113.7"),  # spoof attempt is ignored
+        ("203.0.113.7, 10.0.0.2", 2, "203.0.113.7"),  # two proxies
+        ("203.0.113.7", 2, "203.0.113.7"),  # count larger than the chain
+    ],
+)
+def test_client_ip_behind_trusted_proxies(
+    client_factory: Callable[..., TestClient], xff: str, count: int, expected: str
+) -> None:
+    client = client_factory(trusted_proxy_count=count)
+    assert client.get("/proxy", headers={"x-forwarded-for": xff}).json()["client_ip"] == expected
 
 
 def test_fingerprint_reads_accept_encoding(client: TestClient) -> None:

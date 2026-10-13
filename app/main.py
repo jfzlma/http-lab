@@ -9,6 +9,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
 
 from . import __version__
 from .api import (
@@ -90,16 +91,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(RequestContextMiddleware, settings=settings)
     install_error_handlers(app)
 
-    app.include_router(status.router)
-    app.include_router(echo.router)
-    app.include_router(inspect.router)
-    app.include_router(fingerprint.router)
-    app.include_router(bot.router)
-    app.include_router(simulators.router)
-    app.include_router(auth.router)
-    app.include_router(cookies.router)
-    app.include_router(rate_limit.router)
-    app.include_router(pages.router)
+    routers = [
+        status.router,
+        echo.router,
+        inspect.router,
+        fingerprint.router,
+        bot.router,
+        simulators.router,
+        auth.router,
+        cookies.router,
+        rate_limit.router,
+        pages.router,
+    ]
+    for router in routers:
+        app.include_router(router)
+    # Route templates for analytics on requests rejected before routing (413/429).
+    app.state.route_table = [
+        (route.path_regex, route.path)
+        for router in routers
+        for route in router.routes
+        if isinstance(route, APIRoute)
+    ]
 
     app.mount("/static", pages.UIStaticFiles(directory=STATIC_DIR), name="static")
 
