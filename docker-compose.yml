@@ -1,0 +1,40 @@
+# HTTP Lab with Redis-backed rate limiting.
+#   docker compose up --build        -> http://127.0.0.1:8000
+#   HTTP_LAB_PORT=9000 docker compose up --build   (different host port)
+#
+# Settings come from .env when present (copy .env.example); the values under
+# `environment` below take precedence.
+
+services:
+  http-lab:
+    build: .
+    image: http-lab:latest
+    ports:
+      # Host port via HTTP_LAB_PORT (default 8000). Drop the 127.0.0.1 prefix to
+      # expose the service on your network.
+      - "127.0.0.1:${HTTP_LAB_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    # Rate-limit counters are short-lived: no persistence needed.
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    read_only: true
+    tmpfs: [/data]
+    restart: unless-stopped

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browser Fingerprint — HTTP Lab</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>HTTP Lab</h1>
+    <span class="tagline">browser-side fingerprint</span>
+    <nav class="tabs">
+      <button class="tab" onclick="location.href='/'">Dashboard</button>
+      <button class="tab active">Browser Fingerprint</button>
+    </nav>
+  </header>
+
+  <main class="panel active">
+    <section class="card">
+      <h2>Browser Fingerprint</h2>
+      <p class="hint">
+        This page collects what your <em>browser</em> exposes to JavaScript.
+        Values are approximate and browser-dependent: engines differ, hardware
+        reports vary, and privacy browsers falsify or omit many fields. It is a
+        client-side snapshot, not a server-side determination.
+      </p>
+      <button class="btn primary" id="collect">Collect fingerprint</button>
+      <button class="btn" id="clear">Clear</button>
+      <pre class="output" id="output">Press "Collect fingerprint" to gather browser-side signals.</pre>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>HTTP Lab — browser fingerprinting is approximate and browser-dependent.</span>
+    <a href="/docs">OpenAPI /docs</a>
+  </footer>
+
+  <script src="/static/browser_fingerprint.js"></script>
+</body>
+</html>

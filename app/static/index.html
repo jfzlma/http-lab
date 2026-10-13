@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HTTP Lab</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>HTTP&nbsp;Lab</h1>
+    <span class="tagline">inspect requests · simulate servers · test clients</span>
+    <nav class="tabs" id="tabs">
+      <a class="tab active" href="#inspector" data-tab="inspector">Inspector</a>
+      <a class="tab" href="#simulators" data-tab="simulators">Simulators</a>
+      <a class="tab" href="#auth" data-tab="auth">Auth &amp; Cookies</a>
+      <a class="tab" href="#browser" data-tab="browser">Browser Fingerprint</a>
+    </nav>
+  </header>
+
+  <main id="panel-inspector" class="panel active">
+    <section class="card">
+      <h2>Request Inspector</h2>
+      <p class="hint">The server sees only what you actually send. Echo, inspect and analyze.</p>
+      <div class="toolbar">
+        <button class="btn" data-request="/ip">/ip</button>
+        <button class="btn" data-request="/headers">/headers</button>
+        <button class="btn" data-request="/proxy">/proxy</button>
+        <button class="btn" data-request="/fingerprint">/fingerprint</button>
+        <button class="btn" data-request="/bot">/bot</button>
+        <button class="btn" data-request="/cookies">/cookies</button>
+      </div>
+      <details class="card-inner">
+        <summary>Send a custom request to /anything</summary>
+        <div class="row">
+          <select id="any-method">
+            <option>GET</option><option>POST</option><option>PUT</option>
+            <option>PATCH</option><option>DELETE</option><option>OPTIONS</option>
+          </select>
+          <input id="any-path" value="/anything" aria-label="path">
+          <input id="any-query" placeholder="?foo=bar&baz=1" aria-label="query string">
+        </div>
+        <textarea id="any-body" rows="4" placeholder='{"hello": "world"}' aria-label="request body"></textarea>
+        <label class="row"><input type="checkbox" id="any-json" checked> Content-Type: application/json</label>
+        <button class="btn primary" id="any-send">Send</button>
+      </details>
+      <div class="result result-tall" id="inspector-output" aria-live="polite">
+        <span class="muted">Click an endpoint to see exactly what the server received from this browser.</span>
+      </div>
+    </section>
+  </main>
+
+  <main id="panel-simulators" class="panel">
+    <p class="panel-intro">
+      Each card calls one endpoint. Adjust the inputs, and the request line below them
+      updates. Copy it as a URL or a <code>curl</code> command to reproduce the same
+      behaviour from your own client.
+    </p>
+    <div class="grid" id="simulators-grid"></div>
+  </main>
+
+  <main id="panel-auth" class="panel">
+    <p class="panel-intro">
+      Endpoints for testing how a client sends credentials and handles cookies. Nothing
+      you send here is stored or logged.
+    </p>
+    <div class="grid" id="auth-grid"></div>
+  </main>
+
+  <main id="panel-browser" class="panel">
+    <section class="card">
+      <h2>Browser Fingerprint</h2>
+      <p class="hint">Client-side information that a browser exposes to JavaScript.</p>
+      <p class="hint">
+        The server-side view of the same browser is <code>GET /fingerprint</code> (Inspector tab).
+        Comparing the two shows what a site can learn from JavaScript beyond the request itself.
+      </p>
+      <a class="btn primary" href="/fingerprint/browser">Open browser fingerprint page</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>HTTP Lab — self-hosted HTTP/API testing playground.</span>
+    <a href="/docs">OpenAPI /docs</a>
+    <a href="/redoc">ReDoc</a>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
