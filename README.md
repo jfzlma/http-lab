@@ -90,6 +90,12 @@ Request bodies are never stored or logged. `Authorization`, `Cookie` and
 API-key headers, along with sensitive query parameters, are redacted from logs.
 `LOG_REQUESTS=false` turns request logging off entirely.
 
+Optional usage analytics (`ANALYTICS_ENABLED=true`) record aggregate events
+only: route template, client family, status, latency and a visitor hash that
+rotates daily. No IPs, paths, bodies or credentials are stored. See
+[docs/analytics.md](docs/analytics.md) for what is recorded and ready-made
+queries for Cloud Run.
+
 ## Development
 
 ```bash
